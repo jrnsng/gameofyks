@@ -153,15 +153,17 @@
 
         .floating-text {
             position: fixed;
-            top: 40%;
+            top: 45%;
             left: 50%;
-            transform: translate(-50%, -50%);
             font-size: 32px;
             z-index: 2000;
             pointer-events: none;
-            animation: floatUp 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-            text-shadow: 6px 6px 0px #000;
             white-space: nowrap;
+            text-shadow: 6px 6px 0px #000;
+            /* Donanım hızlandırmayı zorla */
+            will-change: transform, opacity;
+            transform: translate3d(-50%, 0, 0);
+            animation: floatUp 0.8s ease-out forwards;
         }
 
         .btn-container {
@@ -185,20 +187,17 @@
         @keyframes floatUp {
             0% {
                 opacity: 0;
-                transform: translate(-50%, 20px);
-                scale: 0.5;
+                transform: translate3d(-50%, 40px, 0) scale(0.6);
             }
 
-            30% {
+            20% {
                 opacity: 1;
-                transform: translate(-50%, -20px);
-                scale: 1.2;
+                transform: translate3d(-50%, 0, 0) scale(1.2);
             }
 
             100% {
                 opacity: 0;
-                transform: translate(-50%, -120px);
-                scale: 1;
+                transform: translate3d(-50%, -120px, 0) scale(1);
             }
         }
 
@@ -225,22 +224,32 @@
         }
 
         .shake {
-            animation: shake 0.3s ease-in-out;
+            animation: shake 0.2s cubic-bezier(.36, .07, .19, .97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
         }
 
         @keyframes shake {
 
-            0%,
-            100% {
-                transform: translate(0);
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
             }
 
-            25% {
-                transform: translate(4px, 4px);
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
             }
 
-            75% {
-                transform: translate(-4px, -4px);
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
             }
         }
     </style>
@@ -351,12 +360,17 @@
         }
 
         function showFloatingText(amount) {
+            const oldTexts = document.querySelectorAll('.floating-text');
+            oldTexts.forEach(t => t.remove());
+
             const el = document.createElement('div');
             el.className = 'floating-text';
             el.innerText = amount > 0 ? `+${amount} XP` : `${amount} XP`;
             el.style.color = amount > 0 ? 'var(--gain-color)' : 'var(--lose-color)';
             document.body.appendChild(el);
-            setTimeout(() => el.remove(), 1200);
+
+            // Bellek yönetimi için 800ms sonra kaldır (animasyon süresiyle uyumlu)
+            setTimeout(() => el.remove(), 800);
         }
 
         function triggerMeteor(btn) {
