@@ -290,6 +290,91 @@
             color: #888;
             cursor: not-allowed;
         }
+
+        .chest-section {
+            background: #1a0530;
+            border: var(--border);
+            padding: 15px;
+            margin-top: 25px;
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .item-slot {
+            aspect-ratio: 1/1;
+            background: #000;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            /* İsim ve emoji alt alta */
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            position: relative;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .item-name {
+            font-size: 7px;
+            /* İsimler çok küçük ama okunur olacak */
+            color: #aaa;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .item-slot.earned .item-name {
+            color: #ffd700;
+        }
+
+        .item-slot.earned {
+            border-color: #ffd700;
+            background: radial-gradient(circle, #240b36, #000);
+        }
+
+        .rarity-legend {
+            font-size: 8px;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            color: #aaa;
+        }
+
+        /* Nadirlik Çerçeveleri */
+        .item-slot.common {
+            border-color: #ffffff;
+        }
+
+        /* Yaygın - Beyaz */
+        .item-slot.rare {
+            border-color: #3498db;
+            box-shadow: 0 0 10px #3498db;
+        }
+
+        /* Nadir - Mavi */
+        .item-slot.legendary {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px #ffd700;
+            animation: glow 1.5s infinite alternate;
+        }
+
+        /* Efsanevi - Altın */
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #ffd700;
+            }
+
+            to {
+                box-shadow: 0 0 20px #ffd700;
+            }
+        }
     </style>
 </head>
 
@@ -369,6 +454,16 @@
                 </div>
             </div>
         </div>
+        <div class="section chest-section">
+            <h2>KOLEKSİYON SANDIĞI</h2>
+            <div id="item-grid" class="item-grid">
+            </div>
+            <div class="rarity-legend">
+                <span style="color:#fff">⚪ Yaygın</span>
+                <span style="color:#3498db">🔵 Nadir</span>
+                <span style="color:#ffd700">🟡 Efsanevi</span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -405,6 +500,81 @@
             { text: "Analiz Ustası: Bugün yaptığın tüm yanlışların nedenini (bilgi/dikkat vb.) yanına not et.", xp: 60 },
         ];
 
+        const items = [
+            // EFSANEVİ (Legendary)
+            { id: 1, name: "ÖSYM Silgisi", emoji: "🧽", rarity: "legendary" },
+            { id: 2, name: "Altın Fosforlu", emoji: "🖍️", rarity: "legendary" },
+            { id: 3, name: "Sınav Giriş Belgesi", emoji: "🎟️", rarity: "legendary" },
+            { id: 4, name: "Büyük Derece Kupası", emoji: "🏆", rarity: "legendary" },
+
+            // NADİR (Rare)
+            { id: 5, name: "Bitik Tükenmez Kalem", emoji: "🖋️", rarity: "rare" },
+            { id: 6, name: "Hatalı Soru Kutusu", emoji: "📦", rarity: "rare" },
+            { id: 7, name: "Kronometre", emoji: "⏲️", rarity: "rare" },
+            { id: 8, name: "Soru Bankası", emoji: "📚", rarity: "rare" },
+            { id: 9, name: "Masa Lambası", emoji: "💡", rarity: "rare" },
+            { id: 10, name: "Ders Notu", emoji: "📜", rarity: "rare" },
+            { id: 11, name: "Geometri Pergel Takımı", emoji: "📐", rarity: "rare" },
+            { id: 12, name: "Mavi Silgi Tozu", emoji: "🌫️", rarity: "rare" },
+
+            // YAYGIN (Common)
+            { id: 13, name: "Uç Kutusu", emoji: "✏️", rarity: "common" },
+            { id: 14, name: "Gece Kahvesi", emoji: "☕", rarity: "common" },
+            { id: 15, name: "Kırık Cetvel", emoji: "📏", rarity: "common" },
+            { id: 16, name: "Sıcak Çay", emoji: "🍵", rarity: "common" },
+            { id: 17, name: "Yapışkan Not", emoji: "🔖", rarity: "common" },
+            { id: 18, name: "Su Şişesi", emoji: "💧", rarity: "common" },
+            { id: 19, name: "Masa Fanı", emoji: "🌀", rarity: "common" },
+            { id: 20, name: "Hesap Makinesi", emoji: "🔢", rarity: "common" },
+            { id: 21, name: "A4 Kağıdı", emoji: "📄", rarity: "common" },
+            { id: 22, name: "Kırmızı Kalem", emoji: "🖍️", rarity: "common" },
+            { id: 23, name: "Sözlük", emoji: "📖", rarity: "common" },
+            { id: 24, name: "Kuru Üzüm Tabağı", emoji: "🥣", rarity: "common" },
+            { id: 25, name: "Müzik Çalar", emoji: "🎧", rarity: "common" },
+            { id: 26, name: "Okuma Gözlüğü", emoji: "👓", rarity: "common" },
+            { id: 27, name: "Bilgi Sayan", emoji: "💻", rarity: "common" },
+            { id: 28, name: "Paslanmış Ataş", emoji: "📎", rarity: "common" },
+        ];
+
+        let myItems = JSON.parse(localStorage.getItem('my_items')) || [];
+
+        function updateChestUI() {
+            const grid = document.getElementById('item-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            items.forEach(item => {
+                const isEarned = myItems.includes(item.id);
+                const slot = document.createElement('div');
+
+                // Eşya kazanıldıysa nadirlik sınıfını ekle, kazanılmadıysa standart bırak
+                slot.className = `item-slot ${isEarned ? 'earned ' + item.rarity : ''}`;
+
+                let raritySymbol = "";
+                if (item.rarity === 'legendary') raritySymbol = "✨";
+                else if (item.rarity === 'rare') raritySymbol = "🔹";
+                else raritySymbol = "⚪";
+
+                slot.innerHTML = `
+            <div>${isEarned ? item.emoji : '❓'}</div>
+            <div class="item-name">${isEarned ? raritySymbol + " " + item.name : 'KİLİTLİ'}</div>
+        `;
+                grid.appendChild(slot);
+            });
+        }
+
+        // Görev tamamlandığında çağrılacak fonksiyon (Önceki completeDailyChallenge içine ekle)
+        function dropItem() {
+            const unearnedItems = items.filter(i => !myItems.includes(i.id));
+            if (unearnedItems.length > 0) {
+                const randomItem = unearnedItems[Math.floor(Math.random() * unearnedItems.length)];
+                myItems.push(randomItem.id);
+                localStorage.setItem('my_items', JSON.stringify(myItems));
+                alert(`TEBRİKLER! Görevi tamamladın ve bir eşya kazandın: ${randomItem.emoji} ${randomItem.name}`);
+                updateChestUI();
+            }
+        }
+
         let currentDaily = null;
 
         function setupDailyMission() {
@@ -412,6 +582,8 @@
             const savedDate = localStorage.getItem('daily_date');
             const isCompleted = localStorage.getItem('daily_completed') === today;
             const btn = document.getElementById('daily-complete-btn'); // Butonu tanımladık
+            let xp = parseInt(localStorage.getItem('study_xp')) || 0;
+            let myItems = JSON.parse(localStorage.getItem('my_items')) || [];
 
             if (savedDate !== today) {
                 const randomIndex = Math.floor(Math.random() * dailyMissions.length);
@@ -446,8 +618,10 @@
             btn.disabled = true;
             btn.innerText = "TAMAMLANDI!";
 
+            // Eşya düşürme fonksiyonunu burada çağırıyoruz
+            dropItem();
+
             playSound('gain');
-            // Meteor efektini buton üzerinde tetikle
             triggerMeteor(btn);
 
             setTimeout(() => {
@@ -605,10 +779,14 @@
                 }
             });
 
+            document.getElementById('xp-val').innerText = xp;
+            localStorage.setItem('study_xp', xp);
+            updateChestUI();
 
         }
 
         updateUI();
+        updateChestUI();
     </script>
 </body>
 
