@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Study RPG v3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0221;
+            --panel-color: #240b36;
+            --gain-color: #4dfd63;
+            --lose-color: #ff3838;
+            --border: 4px solid #000;
+        }
+
+        * {
+            touch-action: manipulation;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            image-rendering: pixelated;
+        }
+
+        #header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: var(--panel-color);
+            border: var(--border);
+            padding: 15px 10px;
+            box-shadow: 0 5px 0 #000;
+            margin-bottom: 20px;
+        }
+
+        #rank-text {
+            font-size: 10px;
+            color: #ffd700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        #xp-text {
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #xp-bar-bg {
+            width: 100%;
+            height: 20px;
+            background: #000;
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+
+        #xp-bar-fill {
+            height: 100%;
+            background: var(--gain-color);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .main-content {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .section {
+            background: var(--panel-color);
+            border: var(--border);
+            padding: 15px;
+            margin-bottom: 25px;
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        h2 {
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #fff;
+            padding-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border: 2px dashed #444;
+        }
+
+        select {
+            padding: 12px;
+            font-family: 'Press Start 2P';
+            font-size: 9px;
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            width: 100%;
+        }
+
+        .btn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 20px 10px;
+            border: var(--border);
+            color: white;
+            cursor: pointer;
+            text-shadow: 2px 2px 0px #000;
+            box-shadow: 4px 4px 0px #000;
+            transition: 0.1s;
+        }
+
+        button:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px #000;
+        }
+
+        .gain-btn {
+            background: #2d5a27;
+        }
+
+        .spend-btn {
+            background: #8b0000;
+        }
+
+        .reset-btn {
+            background: #444;
+            margin-top: 10px;
+        }
+
+        .floating-text {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            z-index: 2000;
+            pointer-events: none;
+            animation: floatUp 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+            text-shadow: 6px 6px 0px #000;
+            white-space: nowrap;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .xp-needed {
+            font-size: 8px;
+            color: #aaa;
+            text-align: right;
+            margin-bottom: 5px;
+        }
+
+        .unlocked {
+            color: var(--gain-color) !important;
+            font-weight: bold;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+                scale: 0.5;
+            }
+
+            30% {
+                opacity: 1;
+                transform: translate(-50%, -20px);
+                scale: 1.2;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -120px);
+                scale: 1;
+            }
+        }
+
+        .meteor {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ffeb3b, #ff9800, #f44336);
+            border-radius: 50% 50% 50% 10%;
+            z-index: 1500;
+            animation: fall 0.5s ease-in forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-400px) rotate(-45deg) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(0) rotate(-45deg) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translate(0);
+            }
+
+            25% {
+                transform: translate(4px, 4px);
+            }
+
+            75% {
+                transform: translate(-4px, -4px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="header" class="main-content">
+        <div id="rank-text">RÜTBE: TOZLU KİTAPLIK</div>
+        <div id="xp-text">XP: <span id="xp-val">0</span></div>
+        <div id="xp-bar-bg">
+            <div id="xp-bar-fill"></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="section">
+            <h2>GÖREVLER</h2>
+            <div class="controls">
+                <span>DERS SEÇİMİ:</span>
+                <select id="lesson">
+                    <option value="diger">SAY / SÖZ / EA (+2X AKTİF)</option>
+                    <option value="muaf">BİYOLOJİ / EDEBİYAT</option>
+                </select>
+                <label style="display: flex; align-items:center; gap:10px; margin-top:10px;">
+                    <input type="checkbox" id="isFull" style="width:20px; height:20px;"> FULL DOĞRU (BONUS)
+                </label>
+            </div>
+            <div class="btn-list">
+                <button class="gain-btn" onclick="handleXP(2, this)">10dk Video (+2)</button>
+                <button class="gain-btn" onclick="handleXP(5, this)">1 Test Çözmek (+5)</button>
+                <button class="gain-btn" onclick="handleXP(20, this)">1 Branş Denemesi (+20)</button>
+                <button class="gain-btn" onclick="handleXP(20, this)">Konu Tüm Testler (+20)</button>
+                <button class="gain-btn" onclick="handleXP(20, this)">Deneme Analizi (+20)</button>
+                <button class="gain-btn" onclick="handleXP(30, this)">Ardı Ardına 5 Test (+30)</button>
+                <button class="gain-btn" onclick="handleXP(40, this)">Konu Özeti (+40)</button>
+                <button class="gain-btn" onclick="handleXP(150, this)">Kitap Bitirmek (+150)</button>
+                <button class="gain-btn" onclick="handleXP(500, this)">Genel Deneme (+500)</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>MAĞAZA</h2>
+            <div class="btn-list">
+                <div class="btn-container">
+                    <button class="spend-btn" onclick="handleXP(-70, this)">Sigara Molası (-70)</button>
+                    <div id="info-70-1" class="xp-needed"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="spend-btn" onclick="handleXP(-70, this)">Atıştırmalık (-70)</button>
+                    <div id="info-70-2" class="xp-needed"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="spend-btn" onclick="handleXP(-70, this)">10dk Kestirmek (-70)</button>
+                    <div id="info-70-3" class="xp-needed"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="spend-btn" onclick="handleXP(-100, this)">10dk Telefon (-100)</button>
+                    <div id="info-100" class="xp-needed"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="spend-btn" onclick="handleXP(-140, this)">20dk Oyun (-140)</button>
+                    <div id="info-140" class="xp-needed"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="reset-btn" onclick="resetDay(this)">GÜNÜ BİTİR (-250)</button>
+                    <div id="info-250" class="xp-needed"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let xp = parseInt(localStorage.getItem('study_xp')) || 0;
+        let lastRank = "";
+
+        // SES MOTORU
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'gain') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
+        function showFloatingText(amount) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = amount > 0 ? `+${amount} XP` : `${amount} XP`;
+            el.style.color = amount > 0 ? 'var(--gain-color)' : 'var(--lose-color)';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1200);
+        }
+
+        function triggerMeteor(btn) {
+            const rect = btn.getBoundingClientRect();
+            const m = document.createElement('div');
+            m.className = 'meteor';
+            m.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+            m.style.top = (rect.top + window.scrollY - 20) + 'px';
+            document.body.appendChild(m);
+
+            setTimeout(() => {
+                m.remove();
+                document.body.classList.add('shake');
+                if (window.navigator.vibrate) window.navigator.vibrate([50, 30, 50]);
+                setTimeout(() => document.body.classList.remove('shake'), 300);
+            }, 450);
+        }
+
+        function handleXP(amount, btn) {
+            let finalAmount = amount;
+            const isFull = document.getElementById('isFull').checked;
+            const lesson = document.getElementById('lesson').value;
+
+            if (amount > 0) {
+                // Çarpan Kontrolü
+                if (isFull && lesson === 'diger' && amount !== 500) {
+                    finalAmount = amount * 2;
+                }
+                xp += finalAmount;
+                playSound('gain');
+            } else {
+                if (xp + amount < 0) {
+                    alert("Yeterli XP birikmedi!");
+                    return;
+                }
+                xp += amount;
+                playSound('spend');
+            }
+
+            triggerMeteor(btn);
+            setTimeout(() => {
+                showFloatingText(finalAmount);
+                updateUI();
+            }, 500);
+        }
+
+        function resetDay(btn) {
+            const REQUIRED_XP = 250;
+
+            if (xp < REQUIRED_XP) {
+                // Yeterli XP yoksa hata mesajı ve ses
+                playSound('spend');
+                alert(`Günü bitirmek için henüz yeterli enerjin yok! \nEn az ${REQUIRED_XP} XP toplamalısın. \nŞu anki XP: ${xp}`);
+                return;
+            }
+
+            // Yeterli XP varsa onay iste ve sıfırla
+            if (confirm("Harika bir iş çıkardın! 250 XP harcayarak günü bitirmek üzeresin. Emin misin?")) {
+                triggerMeteor(btn);
+                xp = 0; // Günü bitirince XP sıfırlanır
+                playSound('spend');
+                setTimeout(() => {
+                    showFloatingText(-250); // Harcanan XP'yi ekranda göster
+                    updateUI();
+                }, 500);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('xp-val').innerText = xp;
+            localStorage.setItem('study_xp', xp);
+            const rankText = document.getElementById('rank-text');
+            let currentRank = "";
+            if (xp < 50) currentRank = "TOZLU KİTAPLIK";
+            else if (xp < 150) currentRank = "MÜREKKEP FEDAİSİ";
+            else if (xp < 350) currentRank = "GECE LAMBASI MUHAFIZI";
+            else if (xp < 700) currentRank = "SINAV CANAVARI";
+            else currentRank = "PİXEL PROFESÖR";
+            rankText.innerText = "RÜTBE: " + currentRank;
+            let fill = (xp / 7000) * 1000;
+            document.getElementById('xp-bar-fill').style.width = Math.min(fill, 100) + "%";
+            const shopItems = [
+                { id: 'info-70-1', cost: 70 },
+                { id: 'info-70-2', cost: 70 },
+                { id: 'info-70-3', cost: 70 },
+                { id: 'info-100', cost: 100 },
+                { id: 'info-140', cost: 140 },
+                { id: 'info-250', cost: 250 }
+            ];
+            shopItems.forEach(item => {
+                const el = document.getElementById(item.id);
+                if (xp >= item.cost) {
+                    el.innerText = "SATIN ALINABİLİR!";
+                    el.classList.add('unlocked');
+                } else {
+                    const diff = item.cost - xp;
+                    el.innerText = `${diff} XP DAHA GEREKLİ`;
+                    el.classList.remove('unlocked');
+                }
+            });
+
+
+        }
+
+        updateUI();
+    </script>
+</body>
+
+</html>
