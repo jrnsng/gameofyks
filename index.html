@@ -252,6 +252,44 @@
                 transform: translate3d(4px, 0, 0);
             }
         }
+
+        .daily-challenge {
+            background: linear-gradient(45deg, #4b0082, #240b36);
+            border: 4px double #ffd700 !important;
+            padding: 15px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .daily-title {
+            color: #ffd700;
+            font-size: 10px;
+            margin-bottom: 10px;
+            display: block;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        #daily-desc {
+            font-size: 9px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .complete-btn {
+            background: #ffd700;
+            color: #000;
+            width: 100%;
+            text-shadow: none;
+            font-weight: bold;
+        }
+
+        .complete-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 
@@ -268,6 +306,12 @@
     <div class="main-content">
         <div class="section">
             <h2>GÖREVLER</h2>
+            <div class="daily-challenge" id="daily-panel">
+                <span class="daily-title">✨ GÜNÜN MEYDAN OKUMASI</span>
+                <span id="daily-desc">Yükleniyor...</span>
+                <button id="daily-complete-btn" class="complete-btn" onclick="completeDailyChallenge()">GÖREVİ
+                    YAPTIM</button>
+            </div>
             <div class="controls">
                 <span>DERS SEÇİMİ:</span>
                 <select id="lesson">
@@ -330,6 +374,90 @@
     <script>
         let xp = parseInt(localStorage.getItem('study_xp')) || 0;
         let lastRank = "";
+
+        const dailyMissions = [
+            { text: "Odaklanma Şampiyonu: Tek oturuşta, masadan hiç kalkmadan 90 dakika kesintisiz çalış.", xp: 120 },
+            { text: "Karmaşa Engelleyici: Bugün 3 farklı branştan birer test çözerek zihnini vites değiştirmeye zorla.", xp: 100 },
+            { text: "Süreyle Yarış: Bir branş denemesini, ÖSYM süresinden 15 dakika daha kısa sürede bitir.", xp: 130 },
+            { text: "Akşam Şöleni: Günü bitirmeden önce, gün boyu yaptığın tüm yanlış soruları temiz bir kağıda tekrar çöz.", xp: 110 },
+            { text: "Problem Maratonu: Hiç durmadan, ardı ardına 25 adet yeni nesil matematik problemi çöz.", xp: 100 },
+            { text: "Işıklar Sönene Kadar: Bugün toplamda 500 XP toplayana kadar uyku moduna geçme.", xp: 150 },
+            { text: "Karanlık Oda: Bugün çalışma süren boyunca sosyal medya uygulamalarını hiç açma.", xp: 140 },
+            { text: "Sessiz Fırtına: Bugün 4 saat boyunca mutlak sessizlikte (müziksiz) çalış.", xp: 110 },
+            { text: "Yanıltıcı Deneme: Boş bıraktığın tüm soruların konusunu oku ve üzerine 5'er soru çöz.", xp: 125 },
+            { text: "Matematik Ambargosu: 10 adet geometri sorusunu önce zihninden kurgula, sonra kağıda dök.", xp: 115 },
+            { text: "Zirve Tırmanışı: Bugün çözdüğün son test, günün en zor testi olsun.", xp: 100 },
+            { text: "Sıfır Hata Basıncı: Aynı konudan 3 test çöz ve toplamda 2'den fazla yanlış yapma.", xp: 140 },
+            { text: "Dijital Oruç: Günü bitirene kadar telefonunu kapatıp başka bir odaya kilitle.", xp: 150 },
+            { text: "Paragraf Komandosu: Süre tutarak, hiç durmadan 50 paragraf sorusunu tek seferde bitir.", xp: 130 },
+            { text: "Hız ve İsabet: Bir matematik testini her soruya max 60 sn ayırarak %90 başarıyla bitir.", xp: 135 },
+            { text: "Dijital Detoks: Bugün 2 saat boyunca telefonunu tamamen kapat veya başka odaya koy.", xp: 80 },
+            { text: "Pomodoro Kralı: Hiç bozmadan ardı ardına 4 Pomodoro (25dk ders/5dk mola) tamamla.", xp: 60 },
+            { text: "Sabah Yıldızı: Saat 08:30 olmadan ilk test kitabının kapağını aç ve çalışmaya başla.", xp: 70 },
+            { text: "Gece Nöbeti: Gece saat 23:00'den sonra 40 dakika daha odaklanarak çalış.", xp: 50 },
+            { text: "Hız Testi: Bir testi normal süresinden 5 dakika erken bitir (Doğruluk şart değil).", xp: 50 },
+            { text: "Mükemmeliyetçi: Tek seferde hiç yanlışsız (Full) bir branş denemesi bitir.", xp: 120 },
+            { text: "Maratoncu: Aynı dersten ara vermeden 3 farklı konudan test çöz.", xp: 90 },
+            { text: "Geriye Dönük: tam 2 hafta önce çalıştığın bir konudan 1 adet tekrar testi çöz.", xp: 50 },
+            { text: "Özet Ustası: Çalıştığın konuyu birine anlatıyormuş gibi boş kağıda şematize et.", xp: 55 },
+            { text: "Formül Ezberci: Unuttuğun veya zorlandığın 5 notu/formülü 10'ar kez kağıda yaz.", xp: 40 },
+            { text: "İradeli Öğrenci: Bugün mağazadan hiçbir şey (mola/atıştırmalık) almadan günü bitir.", xp: 100 },
+            { text: "Analiz Ustası: Bugün yaptığın tüm yanlışların nedenini (bilgi/dikkat vb.) yanına not et.", xp: 60 },
+        ];
+
+        let currentDaily = null;
+
+        function setupDailyMission() {
+            const today = new Date().toDateString();
+            const savedDate = localStorage.getItem('daily_date');
+            const isCompleted = localStorage.getItem('daily_completed') === today;
+            const btn = document.getElementById('daily-complete-btn'); // Butonu tanımladık
+
+            if (savedDate !== today) {
+                const randomIndex = Math.floor(Math.random() * dailyMissions.length);
+                currentDaily = dailyMissions[randomIndex];
+                localStorage.setItem('daily_mission', JSON.stringify(currentDaily));
+                localStorage.setItem('daily_date', today);
+                localStorage.removeItem('daily_completed');
+
+                // Yeni görev geldiğinde butonu aç ve yazısını düzelt
+                btn.disabled = false;
+                btn.innerText = "GÖREVİ YAPTIM";
+            } else {
+                currentDaily = JSON.parse(localStorage.getItem('daily_mission'));
+            }
+
+            document.getElementById('daily-desc').innerText = currentDaily.text + ` (+${currentDaily.xp} XP)`;
+
+            if (isCompleted) {
+                btn.disabled = true;
+                btn.innerText = "TAMAMLANDI!";
+            }
+        }
+
+        function completeDailyChallenge() {
+            const today = new Date().toDateString();
+            if (localStorage.getItem('daily_completed') === today) return;
+
+            xp += currentDaily.xp;
+            localStorage.setItem('daily_completed', today);
+
+            const btn = document.getElementById('daily-complete-btn');
+            btn.disabled = true;
+            btn.innerText = "TAMAMLANDI!";
+
+            playSound('gain');
+            // Meteor efektini buton üzerinde tetikle
+            triggerMeteor(btn);
+
+            setTimeout(() => {
+                showFloatingText(currentDaily.xp);
+                updateUI();
+            }, 500);
+        }
+
+        // updateUI fonksiyonunun en sonuna setupDailyMission(); eklemeyi unutma veya script sonunda çağır:
+        setupDailyMission();
 
         // SES MOTORU
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -421,19 +549,24 @@
             const REQUIRED_XP = 250;
 
             if (xp < REQUIRED_XP) {
-                // Yeterli XP yoksa hata mesajı ve ses
                 playSound('spend');
                 alert(`Günü bitirmek için henüz yeterli enerjin yok! \nEn az ${REQUIRED_XP} XP toplamalısın. \nŞu anki XP: ${xp}`);
                 return;
             }
 
-            // Yeterli XP varsa onay iste ve sıfırla
             if (confirm("Harika bir iş çıkardın! 250 XP harcayarak günü bitirmek üzeresin. Emin misin?")) {
                 triggerMeteor(btn);
-                xp = 0; // Günü bitirince XP sıfırlanır
+                xp = 0;
+
+                // --- GÖREV YENİLEME MANTIĞI BURADA ---
+                localStorage.removeItem('daily_date'); // Tarihi siliyoruz ki yeni görev tetiklensin
+                localStorage.removeItem('daily_completed'); // Tamamlanma durumunu siliyoruz
+                // -------------------------------------
+
                 playSound('spend');
                 setTimeout(() => {
-                    showFloatingText(-250); // Harcanan XP'yi ekranda göster
+                    showFloatingText(-250);
+                    setupDailyMission(); // Yeni görevi anında ekrana getirir
                     updateUI();
                 }, 500);
             }
@@ -445,8 +578,8 @@
             const rankText = document.getElementById('rank-text');
             let currentRank = "";
             if (xp < 50) currentRank = "TOZLU KİTAPLIK";
-            else if (xp < 150) currentRank = "MÜREKKEP FEDAİSİ";
-            else if (xp < 350) currentRank = "GECE LAMBASI MUHAFIZI";
+            else if (xp < 150) currentRank = "KALEM ÜSTADI";
+            else if (xp < 350) currentRank = "DENEME MUHAFIZI";
             else if (xp < 700) currentRank = "SINAV CANAVARI";
             else currentRank = "PİXEL PROFESÖR";
             rankText.innerText = "RÜTBE: " + currentRank;
