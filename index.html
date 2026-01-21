@@ -381,6 +381,36 @@
                 box-shadow: 0 0 20px #ffd700;
             }
         }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--panel-color);
+            border: 4px solid #ffd700;
+            padding: 20px;
+            z-index: 3000;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 50px #000;
+            text-align: center;
+        }
+
+        .modal h3 {
+            color: #ffd700;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin: 10px 0;
+            border-bottom: 1px dashed #444;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -407,6 +437,7 @@
                 <span>DERS SEÇİMİ:</span>
                 <select id="lesson">
                     <option value="diger">SAY / SÖZ / EA (+2X AKTİF)</option>
+                    <option value="matematik">MATEMATİK (SABİT 2X XP! 🔥)</option>
                     <option value="muaf">BİYOLOJİ / EDEBİYAT</option>
                 </select>
                 <label style="display: flex; align-items:center; gap:10px; margin-top:10px;">
@@ -414,15 +445,15 @@
                 </label>
             </div>
             <div class="btn-list">
-                <button class="gain-btn" onclick="handleXP(2, this)">10dk Video (+2)</button>
-                <button class="gain-btn" onclick="handleXP(5, this)">1 Test Çözmek (+5)</button>
-                <button class="gain-btn" onclick="handleXP(20, this)">1 Branş Denemesi (+20)</button>
+                <button class="gain-btn" onclick="handleXP(10, this)">10dk Video (+10)</button>
+                <button class="gain-btn" onclick="handleXP(15, this)">1 Test Çözmek (+15)</button>
                 <button class="gain-btn" onclick="handleXP(20, this)">Konu Tüm Testler (+20)</button>
                 <button class="gain-btn" onclick="handleXP(20, this)">Deneme Analizi (+20)</button>
-                <button class="gain-btn" onclick="handleXP(30, this)">Ardı Ardına 5 Test (+30)</button>
-                <button class="gain-btn" onclick="handleXP(40, this)">Konu Özeti (+40)</button>
-                <button class="gain-btn" onclick="handleXP(50, this)">Genel Deneme (+50)</button>
+                <button class="gain-btn" onclick="handleXP(40, this)">1 Branş Denemesi (+40)</button>
+                <button class="gain-btn" onclick="handleXP(50, this)">Ardı Ardına 5 Test (+50)</button>
+                <button class="gain-btn" onclick="handleXP(50, this)">Konu Özeti (+50)</button>
                 <button class="gain-btn" onclick="handleXP(150, this)">Kitap Bitirmek (+150)</button>
+                <button class="gain-btn" onclick="handleXP(200, this)">Genel Deneme (+200)</button>
             </div>
         </div>
 
@@ -430,28 +461,28 @@
             <h2>MAĞAZA</h2>
             <div class="btn-list">
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-70, this)">Sigara Molası (-70)</button>
-                    <div id="info-70-1" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-50, this)">Sigara Molası (-50)</button>
+                    <div id="info-50-1" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-70, this)">Atıştırmalık (-70)</button>
-                    <div id="info-70-2" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-50, this)">Atıştırmalık (-50)</button>
+                    <div id="info-50-2" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-70, this)">10dk Kestirmek (-70)</button>
-                    <div id="info-70-3" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-70, this)">10dk Telefon (-70)</button>
+                    <div id="info-70" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-100, this)">10dk Telefon (-100)</button>
-                    <div id="info-100" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-100, this)">10dk Kestirmek (-100)</button>
+                    <div id="info-100-1" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-140, this)">20dk Oyun (-140)</button>
-                    <div id="info-140" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-100, this)">20dk Oyun (-100)</button>
+                    <div id="info-100-2" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
@@ -476,32 +507,48 @@
         let xp = parseInt(localStorage.getItem('study_xp')) || 0;
         let lastRank = "";
 
+        let stats = JSON.parse(localStorage.getItem('study_stats')) || {
+            tests: 0,
+            videos: 0,
+            deneme: 0,
+            totalGain: 0,
+            totalSpend: 0
+        };
+
         const dailyMissions = [
-            { text: "Odaklanma Şampiyonu: Tek oturuşta, masadan hiç kalkmadan 90 dakika kesintisiz çalış.", xp: 120 },
-            { text: "Karmaşa Engelleyici: 3 farklı branştan beşer test çözerek zihnini vites değiştirmeye zorla.", xp: 100 },
-            { text: "Süreyle Yarış: Bir branş denemesini, soru sayısı kadar dk'da.", xp: 130 },
-            { text: "Akşam Şöleni: Günü bitirmeden önce, gün boyu yaptığın tüm yanlış soruları temiz bir kağıda tekrar çöz.", xp: 110 },
-            { text: "Problem Maratonu: Hiç durmadan, ardı ardına 25 adet yeni nesil matematik problemi çöz.", xp: 100 },
-            { text: "Işıklar Sönene Kadar: Bugün toplamda 500 XP toplayana kadar uyku moduna geçme.", xp: 150 },
-            { text: "Karanlık Oda: Bugün çalışma süren boyunca sosyal medya uygulamalarını hiç açma.", xp: 140 },
-            { text: "Sessiz Fırtına: Bugün 4 saat boyunca mutlak sessizlikte (müziksiz) çalış.", xp: 50 },
-            { text: "Yanıltıcı Deneme: Boş bıraktığın tüm soruların konusunu oku ve üzerine 1'er test çöz.", xp: 125 },
-            { text: "Matematik Ambargosu: 10 adet geometri sorusunu önce zihninden kurgula, sonra kağıda dök, kalem oynatmadan.", xp: 115 },
-            { text: "Zirve Tırmanışı: Bugün çözdüğün son test, günün en zor testi olsun.", xp: 100 },
-            { text: "Sıfır Hata Basıncı: Aynı konudan 3 test çöz ve toplamda 2'den fazla yanlış yapma.", xp: 140 },
-            { text: "Hız ve İsabet: Bir matematik testini her soruya max 1 dk ayırarak %90 başarıyla bitir.", xp: 135 },
-            { text: "Dijital Detoks: Bugün 2 saat boyunca telefonunu tamamen kapat veya başka odaya koy.", xp: 80 },
-            { text: "Pomodoro Kralı: Hiç bozmadan ardı ardına 4 Pomodoro (50dk ders/10dk mola) tamamla.", xp: 60 },
-            { text: "Sabah Yıldızı: Saat 10:00 olmadan ilk test kitabının kapağını aç ve çalışmaya başla.", xp: 70 },
-            { text: "Gece Nöbeti: Gece saat 23:00'den sonra 40 dakika daha odaklanarak çalış.", xp: 150 },
+
+            // --- KOLAY GÖREVLER (40 - 60 XP) ---
+            { text: "Formül Ezberci: Unuttuğun veya zorlandığın 5 notu/formülü 10'ar kez kağıda yaz.", xp: 40 },
             { text: "Hız Testi: Bir testi normal süresinden 5 dakika erken bitir (Doğruluk şart değil).", xp: 50 },
-            { text: "Mükemmeliyetçi: Tek seferde hiç yanlışsız (Full) bir branş denemesi bitir.", xp: 120 },
-            { text: "Maratoncu: Aynı dersten ara vermeden 3 farklı konudan test çöz.", xp: 90 },
+            { text: "Sessiz Fırtına: Bugün 4 saat boyunca mutlak sessizlikte (müziksiz) çalış.", xp: 50 },
             { text: "Geriye Dönük: 2 hafta önce çalıştığın bir konudan 2 adet tekrar testi çöz.", xp: 50 },
             { text: "Özet Ustası: Çalıştığın konuyu birine anlatıyormuş gibi boş kağıda şematize et.", xp: 55 },
-            { text: "Formül Ezberci: Unuttuğun veya zorlandığın 5 notu/formülü 10'ar kez kağıda yaz.", xp: 40 },
+            { text: "Pomodoro Kralı: Hiç bozmadan ardı ardına 4 Pomodoro (50dk ders/10dk mola) tamamla.", xp: 60 },
+            { text: "Analiz Ustası: Bugün yaptığın tüm yanlışların nedenini (bilgi/dikkat vb.) yanına not et.", xp: 60 },
+
+            // --- ORTA GÖREVLER (70 - 110 XP) ---
+            { text: "Sabah Yıldızı: Saat 10:00 olmadan ilk test kitabının kapağını aç ve çalışmaya başla.", xp: 70 },
+            { text: "Dijital Detoks: Bugün 2 saat boyunca telefonunu tamamen kapat veya başka odaya koy.", xp: 80 },
+            { text: "Maratoncu: Aynı dersten ara vermeden 3 farklı konudan test çöz.", xp: 90 },
+            { text: "Zirve Tırmanışı: Bugün çözdüğün son test, günün en zor testi olsun.", xp: 100 },
+            { text: "Karmaşa Engelleyici: 3 farklı branştan beşer test çözerek zihnini vites değiştirmeye zorla.", xp: 100 },
+            { text: "Problem Maratonu: Hiç durmadan, ardı ardına 25 adet yeni nesil matematik problemi çöz.", xp: 100 },
             { text: "İradeli Öğrenci: Bugün mağazadan hiçbir şey (mola/atıştırmalık) almadan günü bitir.", xp: 100 },
-            { text: "Analiz Ustası: Bugün yaptığın tüm yanlışların nedenini (bilgi/dikkat vb.) yanına not et.", xp: 60 }
+            { text: "Akşam Şöleni: Günü bitirmeden önce, gün boyu yaptığın tüm yanlış soruları temiz bir kağıda tekrar çöz.", xp: 110 },
+
+            // --- ZOR GÖREVLER (115 - 140 XP) ---
+            { text: "Matematik Ambargosu: 10 adet geometri sorusunu önce zihninden kurgula, sonra kağıda dök, kalem oynatmadan.", xp: 120 },
+            { text: "Odaklanma Şampiyonu: Tek oturuşta, masadan hiç kalkmadan 90 dakika kesintisiz çalış.", xp: 120 },
+            { text: "Mükemmeliyetçi: Tek seferde hiç yanlışsız (Full) bir branş denemesi bitir.", xp: 120 },
+            { text: "Yanıltıcı Deneme: Boş bıraktığın tüm soruların konusunu oku ve üzerine 1'er test çöz.", xp: 125 },
+            { text: "Süreyle Yarış: Bir branş denemesini, soru sayısı kadar dk'da.", xp: 130 },
+            { text: "Hız ve İsabet: Bir matematik testini her soruya max 1 dk ayırarak %90 başarıyla bitir.", xp: 135 },
+            { text: "Karanlık Oda: Bugün çalışma süren boyunca sosyal medya uygulamalarını hiç açma.", xp: 140 },
+            { text: "Sıfır Hata Basıncı: Aynı konudan 3 test çöz ve toplamda 2'den fazla yanlış yapma.", xp: 140 },
+
+            // --- EFSANEVİ GÖREVLER (150+ XP) ---
+            { text: "Işıklar Sönene Kadar: Bugün toplamda 500 XP toplayana kadar uyku moduna geçme.", xp: 150 },
+            { text: "Gece Nöbeti: Gece saat 23:00'den sonra 40 dakika daha odaklanarak çalış.", xp: 150 }
         ];
 
         const items = [
@@ -575,7 +622,6 @@
                 const isEarned = myItems.includes(item.id);
                 const slot = document.createElement('div');
 
-                // Eşya kazanıldıysa nadirlik sınıfını ekle, kazanılmadıysa standart bırak
                 slot.className = `item-slot ${isEarned ? 'earned ' + item.rarity : ''}`;
 
                 let raritySymbol = "";
@@ -591,7 +637,6 @@
             });
         }
 
-        // Görev tamamlandığında çağrılacak fonksiyon (Önceki completeDailyChallenge içine ekle)
         function dropItem() {
             const unearnedItems = items.filter(i => !myItems.includes(i.id));
             if (unearnedItems.length > 0) {
@@ -609,7 +654,7 @@
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem('daily_date');
             const isCompleted = localStorage.getItem('daily_completed') === today;
-            const btn = document.getElementById('daily-complete-btn'); // Butonu tanımladık
+            const btn = document.getElementById('daily-complete-btn'); 
             let xp = parseInt(localStorage.getItem('study_xp')) || 0;
             let myItems = JSON.parse(localStorage.getItem('my_items')) || [];
 
@@ -620,7 +665,6 @@
                 localStorage.setItem('daily_date', today);
                 localStorage.removeItem('daily_completed');
 
-                // Yeni görev geldiğinde butonu aç ve yazısını düzelt
                 btn.disabled = false;
                 btn.innerText = "GÖREVİ YAPTIM";
             } else {
@@ -646,7 +690,6 @@
             btn.disabled = true;
             btn.innerText = "TAMAMLANDI!";
 
-            // Eşya düşürme fonksiyonunu burada çağırıyoruz
             dropItem();
 
             playSound('gain');
@@ -658,10 +701,8 @@
             }, 500);
         }
 
-        // updateUI fonksiyonunun en sonuna setupDailyMission(); eklemeyi unutma veya script sonunda çağır:
         setupDailyMission();
 
-        // SES MOTORU
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
@@ -698,8 +739,6 @@
             el.innerText = amount > 0 ? `+${amount} XP` : `${amount} XP`;
             el.style.color = amount > 0 ? 'var(--gain-color)' : 'var(--lose-color)';
             document.body.appendChild(el);
-
-            // Bellek yönetimi için 800ms sonra kaldır (animasyon süresiyle uyumlu)
             setTimeout(() => el.remove(), 800);
         }
 
@@ -725,10 +764,19 @@
             const lesson = document.getElementById('lesson').value;
 
             if (amount > 0) {
-                // Çarpan Kontrolü
-                if (isFull && lesson === 'diger' && amount !== 500) {
-                    finalAmount = amount * 2;
+                let multiplier = 1;
+
+                if (lesson === 'matematik') {
+                    multiplier = 2;
+                    if (isFull) {
+                        multiplier = 4;
+                    }
                 }
+                else if (lesson === 'diger' && isFull) {
+                    multiplier = 2;
+                }
+
+                finalAmount = amount * multiplier;
                 xp += finalAmount;
                 playSound('gain');
             } else {
@@ -740,6 +788,24 @@
                 playSound('spend');
             }
 
+            if (amount > 0) {
+                stats.totalGain += finalAmount;
+                const btnText = btn.innerText.toLowerCase();
+                
+                const match = btnText.match(/\d+/);
+                const count = match ? parseInt(match[0]) : 1;
+
+                if (btnText.includes("test")) {
+                    stats.tests += count; 
+                } else if (btnText.includes("video")) {
+                    stats.videos += count; 
+                } else if (btnText.includes("deneme")) {
+                    stats.deneme += 1;
+                }
+            } else {
+                stats.totalSpend += Math.abs(amount);
+            }
+
             triggerMeteor(btn);
             setTimeout(() => {
                 showFloatingText(finalAmount);
@@ -749,29 +815,37 @@
 
         function resetDay(btn) {
             const REQUIRED_XP = 250;
-
             if (xp < REQUIRED_XP) {
-                playSound('spend');
-                alert(`Günü bitirmek için henüz yeterli enerjin yok! \nEn az ${REQUIRED_XP} XP toplamalısın. \nŞu anki XP: ${xp}`);
+                alert(`En az ${REQUIRED_XP} XP toplamalısın!`);
                 return;
             }
 
-            if (confirm("Harika bir iş çıkardın! 250 XP harcayarak günü bitirmek üzeresin. Emin misin?")) {
-                triggerMeteor(btn);
-                xp = 0;
+            // Raporu Oluştur
+            const reportHTML = `
+        <div id="reportModal" class="modal">
+            <h3>📊 GÜNÜN RAPORU</h3>
+            <div class="stat-row"><span>Çözülen Testler:</span> <span>${stats.tests}</span></div>
+            <div class="stat-row"><span>İzlenen Videolar:</span> <span>${stats.videos}</span></div>
+            <div class="stat-row"><span>Girilen Denemeler:</span> <span>${stats.deneme}</span></div>
+            <div class="stat-row" style="color:var(--gain-color)"><span>Toplam Kazanılan:</span> <span>+${stats.totalGain} XP</span></div>
+            <div class="stat-row" style="color:var(--lose-color)"><span>Toplam Harcanan:</span> <span>-${stats.totalSpend} XP</span></div>
+            <button onclick="closeReport()" class="complete-btn" style="margin-top:20px">YENİ GÜNE BAŞLA</button>
+        </div>
+    `;
+            document.body.insertAdjacentHTML('beforeend', reportHTML);
+        }
 
-                // --- GÖREV YENİLEME MANTIĞI BURADA ---
-                localStorage.removeItem('daily_date'); // Tarihi siliyoruz ki yeni görev tetiklensin
-                localStorage.removeItem('daily_completed'); // Tamamlanma durumunu siliyoruz
-                // -------------------------------------
+        function closeReport() {
+            // Verileri sıfırla ve günü kapat
+            xp = 0;
+            stats = { tests: 0, videos: 0, deneme: 0, totalGain: 0, totalSpend: 0 };
+            localStorage.setItem('study_stats', JSON.stringify(stats));
+            localStorage.removeItem('daily_date');
+            localStorage.removeItem('daily_completed');
 
-                playSound('spend');
-                setTimeout(() => {
-                    showFloatingText(-250);
-                    setupDailyMission(); // Yeni görevi anında ekrana getirir
-                    updateUI();
-                }, 500);
-            }
+            document.getElementById('reportModal').remove();
+            updateUI();
+            setupDailyMission();
         }
 
         function updateUI() {
@@ -788,11 +862,11 @@
             let fill = (xp / 7000) * 1000;
             document.getElementById('xp-bar-fill').style.width = Math.min(fill, 100) + "%";
             const shopItems = [
-                { id: 'info-70-1', cost: 70 },
-                { id: 'info-70-2', cost: 70 },
-                { id: 'info-70-3', cost: 70 },
-                { id: 'info-100', cost: 100 },
-                { id: 'info-140', cost: 140 },
+                { id: 'info-50-1', cost: 50 },
+                { id: 'info-50-2', cost: 50 },
+                { id: 'info-70', cost: 70 },
+                { id: 'info-100-1', cost: 100 },
+                { id: 'info-100-2', cost: 100 },
                 { id: 'info-250', cost: 250 }
             ];
             shopItems.forEach(item => {
