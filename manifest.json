@@ -1,0 +1,23 @@
+{
+  "name": "Game of YKS: Ders Çalışma Oyunu",
+  "short_name": "GameOfYKS",
+  "description": "YKS sürecini oyunlaştırarak takip etmeni sağlayan bir uygulama.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0d0221",
+  "theme_color": "#240b36",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3426/3426231.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3426/3426231.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
