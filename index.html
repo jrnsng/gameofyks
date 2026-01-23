@@ -11,6 +11,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Game of YKS</title>
+
+    <link rel="manifest" href="manifest.json">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker Kayıt Başarılı!', reg))
+                    .catch(err => console.log('Service Worker Kayıt Hatası!', err));
+            });
+        }
+    </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -654,7 +667,7 @@
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem('daily_date');
             const isCompleted = localStorage.getItem('daily_completed') === today;
-            const btn = document.getElementById('daily-complete-btn'); 
+            const btn = document.getElementById('daily-complete-btn');
             let xp = parseInt(localStorage.getItem('study_xp')) || 0;
             let myItems = JSON.parse(localStorage.getItem('my_items')) || [];
 
@@ -791,14 +804,14 @@
             if (amount > 0) {
                 stats.totalGain += finalAmount;
                 const btnText = btn.innerText.toLowerCase();
-                
+
                 const match = btnText.match(/\d+/);
                 const count = match ? parseInt(match[0]) : 1;
 
                 if (btnText.includes("test")) {
-                    stats.tests += count; 
+                    stats.tests += count;
                 } else if (btnText.includes("video")) {
-                    stats.videos += count; 
+                    stats.videos += count;
                 } else if (btnText.includes("deneme")) {
                     stats.deneme += 1;
                 }
@@ -893,4 +906,3 @@
 </body>
 
 </html>
-
