@@ -435,6 +435,18 @@
         <div id="xp-bar-bg">
             <div id="xp-bar-fill"></div>
         </div>
+
+        <div id="timer-container"
+            style="margin-top: 15px; text-align: center; background: rgba(0,0,0,0.2); padding: 10px; border: 2px solid #444;">
+            <div id="timer-display" style="font-size: 18px; color: #fff; margin-bottom: 10px;">00:00:00</div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="start-btn" onclick="startTimer()"
+                    style="padding: 10px; background: #2d5a27; font-size: 8px;">BAŞLAT</button>
+                <button id="stop-btn" onclick="stopTimer()" style="padding: 10px; background: #8b0000; font-size: 8px;"
+                    disabled>DURDUR</button>
+            </div>
+        </div>
+
     </div>
 
     <div class="main-content">
@@ -520,6 +532,38 @@
         let xp = parseInt(localStorage.getItem('study_xp')) || 0;
         let lastRank = "";
 
+        let totalSeconds = parseInt(localStorage.getItem('study_seconds')) || 0;
+        let timerInterval = null;
+
+        // Sayfa yüklendiğinde süreyi formatla
+        updateTimerDisplay();
+
+        function updateTimerDisplay() {
+            const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(totalSeconds % 60).padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${hrs}:${mins}:${secs}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) return;
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                localStorage.setItem('study_seconds', totalSeconds);
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+        }
+
         let stats = JSON.parse(localStorage.getItem('study_stats')) || {
             tests: 0,
             videos: 0,
@@ -541,7 +585,7 @@
             { text: "Geriye Dönük: 2 hafta önce çalıştığın bir konudan 2 adet tekrar testi çöz.", xp: 50 },
             { text: "Özet Ustası: Çalıştığın konuyu birine anlatıyormuş gibi boş kağıda şematize et.", xp: 60 },
             { text: "Analiz Ustası: Bugün yaptığın tüm yanlışların nedenini (bilgi/dikkat vb.) yanına not et.", xp: 60 },
-            
+
             // --- ORTA GÖREVLER (70 - 110 XP) ---
             { text: "Pomodoro Kralı: Hiç bozmadan ardı ardına 3 Pomodoro (50dk ders/10dk mola) tamamla.", xp: 80 },
             { text: "Sessiz Fırtına: Bugün 4 saat boyunca mutlak sessizlikte (müziksiz) çalış.", xp: 80 },
@@ -834,15 +878,25 @@
                 return;
             }
 
-            // Raporu Oluştur
+            stopTimer(); // Günü bitirince kronometreyi durdur
+
+            // VERİM HESABI: 1 saatte 150 XP kazanmak %100 kabul edilirse
+            const studyHours = totalSeconds / 3600;
+            let efficiency = 0;
+            if (studyHours > 0) {
+                efficiency = Math.round((stats.totalGain / (studyHours * 150)) * 100);
+            }
+            efficiency = Math.min(efficiency, 100); // %100'ü geçmesin
+
             const reportHTML = `
         <div id="reportModal" class="modal">
             <h3>📊 GÜNÜN RAPORU</h3>
-            <div class="stat-row"><span>Çözülen Testler:</span> <span>${stats.tests}</span></div>
-            <div class="stat-row"><span>İzlenen Videolar:</span> <span>${stats.videos}</span></div>
-            <div class="stat-row"><span>Girilen Denemeler:</span> <span>${stats.deneme}</span></div>
-            <div class="stat-row" style="color:var(--gain-color)"><span>Toplam Kazanılan:</span> <span>+${stats.totalGain} XP</span></div>
-            <div class="stat-row" style="color:var(--lose-color)"><span>Toplam Harcanan:</span> <span>-${stats.totalSpend} XP</span></div>
+            <div class="stat-row"><span>Odak Süresi:</span> <span>${document.getElementById('timer-display').innerText}</span></div>
+            <div class="stat-row"><span>Kazanılan XP:</span> <span>+${stats.totalGain}</span></div>
+            <div class="stat-row" style="border: 2px solid #ffd700; padding: 10px; margin-top: 15px;">
+                <span>GÜNLÜK VERİM:</span> 
+                <span style="color:${efficiency > 70 ? 'var(--gain-color)' : '#ff9800'}">%${efficiency}</span>
+            </div>
             <button onclick="closeReport()" class="complete-btn" style="margin-top:20px">YENİ GÜNE BAŞLA</button>
         </div>
     `;
@@ -857,9 +911,14 @@
             localStorage.removeItem('daily_date');
             localStorage.removeItem('daily_completed');
 
+            totalSeconds = 0;
+            localStorage.setItem('study_seconds', 0);
+            updateTimerDisplay();
+
             document.getElementById('reportModal').remove();
             updateUI();
             setupDailyMission();
+
         }
 
         function updateUI() {
