@@ -424,6 +424,64 @@
             border-bottom: 1px dashed #444;
             padding-bottom: 5px;
         }
+
+        /* Sekme Butonları */
+        .tab-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 5px;
+            font-size: 8px;
+            background: #333;
+            border: 2px solid #fff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: #ffd700;
+            /* color: #000; */
+            border-color: #fff;
+        }
+
+        /* Tooltip (İsim Kutusu) */
+        .item-slot .tooltip {
+            visibility: hidden;
+            width: 100px;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #fff;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            /* Üstte gözükmesi için */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .item-slot:active .tooltip,
+        .item-slot:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Grid'i görünür tutalım ama varsayılan isimleri silelim */
+        .item-name {
+            display: none;
+        }
     </style>
 </head>
 
@@ -516,15 +574,14 @@
                 </div>
             </div>
         </div>
-        <div class="section chest-section">
-            <h2>KOLEKSİYON SANDIĞI</h2>
-            <div id="item-grid" class="item-grid">
+        <div class="section">
+            <h2>SANDIK</h2>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="filterItems('legendary', this)">✨ EFSANEVİ</button>
+                <button class="tab-btn" onclick="filterItems('rare', this)">🔹 NADİR</button>
+                <button class="tab-btn" onclick="filterItems('common', this)">⚪ YAYGIN</button>
             </div>
-            <div class="rarity-legend">
-                <span style="color:#fff">⚪ Yaygın</span>
-                <span style="color:#3498db">🔵 Nadir</span>
-                <span style="color:#ffd700">🟡 Efsanevi</span>
-            </div>
+            <div id="item-grid" class="item-grid"></div>
         </div>
     </div>
 
@@ -535,7 +592,6 @@
         let totalSeconds = parseInt(localStorage.getItem('study_seconds')) || 0;
         let timerInterval = null;
 
-        // Sayfa yüklendiğinde süreyi formatla
         updateTimerDisplay();
 
         function updateTimerDisplay() {
@@ -565,21 +621,11 @@
         }
 
         let stats = JSON.parse(localStorage.getItem('study_stats')) || {
-            tests: 0,
-            videos: 0,
-            deneme: 0,
             totalGain: 0,
             totalSpend: 0
         };
 
         const dailyMissions = [
-
-            // { text: "Hız Testi: Bir testi normal süresinden 5 dakika erken bitir (Doğruluk şart değil).", xp: 50 },
-            // { text: "Sabah Yıldızı: Saat 10:00 olmadan ilk test kitabının kapağını aç ve çalışmaya başla.", xp: 70 },
-            // { text: "Zirve Tırmanışı: Bugün çözdüğün son test, günün en zor testi olsun.", xp: 100 },
-            // { text: "İradeli Öğrenci: Bugün mağazadan hiçbir şey (mola/atıştırmalık) almadan günü bitir.", xp: 100 },
-            // { text: "Gece Nöbeti: Gece saat 23:00'den sonra 40 dakika daha odaklanarak çalış.", xp: 150 }
-
             // --- KOLAY GÖREVLER (40 - 60 XP) ---
             { text: "Formül Ezberci: Unuttuğun veya zorlandığın 5 notu/formülü 10'ar kez kağıda yaz.", xp: 40 },
             { text: "Geriye Dönük: 2 hafta önce çalıştığın bir konudan 2 adet tekrar testi çöz.", xp: 50 },
@@ -671,25 +717,32 @@
 
         let myItems = JSON.parse(localStorage.getItem('my_items')) || [];
 
+        let currentFilter = 'legendary'; // Varsayılan sekme
+
+        function filterItems(rarity, btn) {
+            currentFilter = rarity;
+            // Buton aktiflik sınıflarını güncelle
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateChestUI();
+        }
+
         function updateChestUI() {
             const grid = document.getElementById('item-grid');
             if (!grid) return;
             grid.innerHTML = '';
 
-            items.forEach(item => {
+            // Sadece seçili nadirlikteki eşyaları filtrele
+            const filteredItems = items.filter(i => i.rarity === currentFilter);
+
+            filteredItems.forEach(item => {
                 const isEarned = myItems.includes(item.id);
                 const slot = document.createElement('div');
-
                 slot.className = `item-slot ${isEarned ? 'earned ' + item.rarity : ''}`;
-
-                let raritySymbol = "";
-                if (item.rarity === 'legendary') raritySymbol = "✨";
-                else if (item.rarity === 'rare') raritySymbol = "🔹";
-                else raritySymbol = "⚪";
 
                 slot.innerHTML = `
             <div>${isEarned ? item.emoji : '❓'}</div>
-            <div class="item-name">${isEarned ? raritySymbol + " " + item.name : 'KİLİTLİ'}</div>
+            <div class="tooltip">${isEarned ? item.name : 'KİLİTLİ'}</div>
         `;
                 grid.appendChild(slot);
             });
@@ -848,18 +901,6 @@
 
             if (amount > 0) {
                 stats.totalGain += finalAmount;
-                const btnText = btn.innerText.toLowerCase();
-
-                const match = btnText.match(/\d+/);
-                const count = match ? parseInt(match[0]) : 1;
-
-                if (btnText.includes("test")) {
-                    stats.tests += count;
-                } else if (btnText.includes("video")) {
-                    stats.videos += count;
-                } else if (btnText.includes("deneme")) {
-                    stats.deneme += 1;
-                }
             } else {
                 stats.totalSpend += Math.abs(amount);
             }
@@ -878,15 +919,15 @@
                 return;
             }
 
-            stopTimer(); // Günü bitirince kronometreyi durdur
+            stopTimer();
 
-            // VERİM HESABI: 1 saatte 150 XP kazanmak %100 kabul edilirse
+            // VERİM HESABI: 1 saatte 150 XP === %100 
             const studyHours = totalSeconds / 3600;
             let efficiency = 0;
             if (studyHours > 0) {
                 efficiency = Math.round((stats.totalGain / (studyHours * 150)) * 100);
             }
-            efficiency = Math.min(efficiency, 100); // %100'ü geçmesin
+            efficiency = Math.min(efficiency, 100);
 
             const reportHTML = `
         <div id="reportModal" class="modal">
@@ -904,7 +945,6 @@
         }
 
         function closeReport() {
-            // Verileri sıfırla ve günü kapat
             xp = 0;
             stats = { tests: 0, videos: 0, deneme: 0, totalGain: 0, totalSpend: 0 };
             localStorage.setItem('study_stats', JSON.stringify(stats));
@@ -932,7 +972,7 @@
             else if (xp < 700) currentRank = "SINAV CANAVARI";
             else currentRank = "ÖSYM";
             rankText.innerText = "RÜTBE: " + currentRank;
-            let fill = (xp / 7000) * 1000;
+            let fill = (xp / 7);
             document.getElementById('xp-bar-fill').style.width = Math.min(fill, 100) + "%";
             const shopItems = [
                 { id: 'info-50-1', cost: 50 },
