@@ -584,7 +584,9 @@
             <div id="item-grid" class="item-grid"></div>
         </div>
     </div>
-    <div><h6>E-Mail: yusufkaratas8656@gmail.com</h6></div>
+    <div>
+        <h6>E-Mail: yusufkaratas8656@gmail.com</h6>
+    </div>
 
     <script>
         let xp = parseInt(localStorage.getItem('study_xp')) || 0;
@@ -1002,30 +1004,34 @@
         }
 
         function closeReport() {
-            // Verileri sıfırla ve sayfayı yenile
-            localStorage.removeItem('start_time');
-            localStorage.setItem('study_seconds', 0);
-            localStorage.setItem('study_xp', 0);
-            localStorage.setItem('study_stats', JSON.stringify({ totalGain: 0, totalSpend: 0 }));
-            location.reload();
-        }
+    // 1. Değişkenleri Sıfırla
+    xp = 0;
+    accumulatedTime = 0;
+    startTime = null;
+    stats = { totalGain: 0, totalSpend: 0 }; // Gereksiz test/video sayacı temizlendi
 
-        function closeReport() {
-            xp = 0;
-            stats = { tests: 0, videos: 0, deneme: 0, totalGain: 0, totalSpend: 0 };
-            localStorage.setItem('study_stats', JSON.stringify(stats));
-            localStorage.removeItem('daily_date');
-            localStorage.removeItem('daily_completed');
+    // 2. LocalStorage Temizliği (Koleksiyon/Eşyalar hariç)
+    localStorage.removeItem('start_time');
+    localStorage.setItem('study_seconds', 0);
+    localStorage.setItem('study_xp', 0);
+    localStorage.setItem('study_stats', JSON.stringify(stats));
+    
+    // Günlük görevlerin her gün yenilenmesi için tarih bilgisini de siliyoruz
+    localStorage.removeItem('daily_done'); 
 
-            // totalSeconds = 0;
-            localStorage.setItem('study_seconds', 0);
-            updateTimerDisplay();
+    // 3. Arayüzü Güncelle
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.remove();
 
-            document.getElementById('reportModal').remove();
-            updateUI();
-            setupDailyMission();
+    updateUI();
+    updateTimerDisplay();
+    
+    // Eğer sayfada yeni görevi hazırlayan bir fonksiyonun varsa çağır:
+    if (typeof setupDailyMission === "function") setupDailyMission();
 
-        }
+    // Sayfayı yenilemek en temiz sıfırlama yöntemidir:
+    location.reload();
+}
 
         function updateUI() {
             document.getElementById('xp-val').innerText = xp;
@@ -1072,5 +1078,3 @@
 </body>
 
 </html>
-
-
