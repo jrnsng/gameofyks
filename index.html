@@ -544,7 +544,7 @@
             <h2>MAĞAZA</h2>
             <div class="btn-list">
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-50, this)">Sigara Molası (-50)</button>
+                    <button class="spend-btn" onclick="handleXP(-50, this)">15dk Mola (-50)</button>
                     <div id="info-50-1" class="xp-needed"></div>
                 </div>
 
@@ -564,8 +564,8 @@
                 </div>
 
                 <div class="btn-container">
-                    <button class="spend-btn" onclick="handleXP(-100, this)">20dk Oyun (-100)</button>
-                    <div id="info-100-2" class="xp-needed"></div>
+                    <button class="spend-btn" onclick="handleXP(-150, this)">20dk Oyun (-150)</button>
+                    <div id="info-150" class="xp-needed"></div>
                 </div>
 
                 <div class="btn-container">
@@ -589,36 +589,90 @@
         let xp = parseInt(localStorage.getItem('study_xp')) || 0;
         let lastRank = "";
 
-        let totalSeconds = parseInt(localStorage.getItem('study_seconds')) || 0;
+
+
+
+
+
+
+        let startTime = parseInt(localStorage.getItem('start_time')) || null;
+        let accumulatedTime = parseInt(localStorage.getItem('study_seconds')) || 0;
         let timerInterval = null;
 
-        updateTimerDisplay();
-
         function updateTimerDisplay() {
-            const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const secs = String(totalSeconds % 60).padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${hrs}:${mins}:${secs}`;
+            let currentTotal = accumulatedTime;
+
+            if (startTime) {
+                const now = Math.floor(Date.now() / 1000);
+                currentTotal += (now - startTime);
+            }
+
+            const hrs = String(Math.floor(currentTotal / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((currentTotal % 3600) / 60)).padStart(2, '0');
+            const secs = String(currentTotal % 60).padStart(2, '0');
+
+            const display = document.getElementById('timer-display');
+            if (display) display.innerText = `${hrs}:${mins}:${secs}`;
         }
 
         function startTimer() {
-            if (timerInterval) return;
+            if (startTime) return;
+
+            startTime = Math.floor(Date.now() / 1000);
+            localStorage.setItem('start_time', startTime);
+
             document.getElementById('start-btn').disabled = true;
             document.getElementById('stop-btn').disabled = false;
 
-            timerInterval = setInterval(() => {
-                totalSeconds++;
-                localStorage.setItem('study_seconds', totalSeconds);
-                updateTimerDisplay();
-            }, 1000);
+            // ÖNEMLİ: Butona basar basmaz ekranı güncelle
+            updateTimerDisplay();
+
+            timerInterval = setInterval(updateTimerDisplay, 1000);
         }
 
         function stopTimer() {
+            if (!startTime) return;
+
+            const now = Math.floor(Date.now() / 1000);
+            accumulatedTime += (now - startTime);
+
+            startTime = null;
+            localStorage.removeItem('start_time');
+            localStorage.setItem('study_seconds', accumulatedTime);
+
             clearInterval(timerInterval);
             timerInterval = null;
+
             document.getElementById('start-btn').disabled = false;
             document.getElementById('stop-btn').disabled = true;
+            updateTimerDisplay();
         }
+
+        if (localStorage.getItem('start_time')) {
+            startTimer();
+        } else {
+            updateTimerDisplay();
+        }
+
+        // Sayfa ilk açıldığında çalışacak kısım
+        window.onload = function () {
+            if (localStorage.getItem('start_time')) {
+                // Eğer kullanıcı sayfayı yenilediğinde süre zaten çalışıyorsa
+                startTime = parseInt(localStorage.getItem('start_time'));
+                timerInterval = setInterval(updateTimerDisplay, 1000);
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('stop-btn').disabled = false;
+            }
+            updateTimerDisplay(); // Her durumda ilk gösterimi yap
+        };
+
+
+
+
+
+
+
+
 
         let stats = JSON.parse(localStorage.getItem('study_stats')) || {
             totalGain: 0,
@@ -912,22 +966,24 @@
             }, 500);
         }
 
-        function resetDay(btn) {
+        function resetDay() {
             const REQUIRED_XP = 250;
             if (xp < REQUIRED_XP) {
                 alert(`En az ${REQUIRED_XP} XP toplamalısın!`);
                 return;
             }
 
+            // Mevcut toplam süreyi hesapla (Kronometre çalışıyorsa farkı da ekle)
+            let finalSeconds = accumulatedTime;
+            if (startTime) {
+                finalSeconds += (Math.floor(Date.now() / 1000) - startTime);
+            }
+
             stopTimer();
 
-            // VERİM HESABI: 1 saatte 150 XP === %100 
-            const studyHours = totalSeconds / 3600;
-            let efficiency = 0;
-            if (studyHours > 0) {
-                efficiency = Math.round((stats.totalGain / (studyHours * 150)) * 100);
-            }
-            efficiency = Math.min(efficiency, 100);
+            // Verim Hesabı: 1 saatte 150 XP baz alınır
+            const studyHours = finalSeconds / 3600;
+            let efficiency = studyHours > 0 ? Math.min(Math.round((stats.totalGain / (studyHours * 150)) * 100), 100) : 0;
 
             const reportHTML = `
         <div id="reportModal" class="modal">
@@ -939,9 +995,18 @@
                 <span style="color:${efficiency > 70 ? 'var(--gain-color)' : '#ff9800'}">%${efficiency}</span>
             </div>
             <button onclick="closeReport()" class="complete-btn" style="margin-top:20px">YENİ GÜNE BAŞLA</button>
-        </div>
-    `;
+        </div>`;
+
             document.body.insertAdjacentHTML('beforeend', reportHTML);
+        }
+
+        function closeReport() {
+            // Verileri sıfırla ve sayfayı yenile
+            localStorage.removeItem('start_time');
+            localStorage.setItem('study_seconds', 0);
+            localStorage.setItem('study_xp', 0);
+            localStorage.setItem('study_stats', JSON.stringify({ totalGain: 0, totalSpend: 0 }));
+            location.reload();
         }
 
         function closeReport() {
@@ -951,7 +1016,7 @@
             localStorage.removeItem('daily_date');
             localStorage.removeItem('daily_completed');
 
-            totalSeconds = 0;
+            // totalSeconds = 0;
             localStorage.setItem('study_seconds', 0);
             updateTimerDisplay();
 
@@ -979,7 +1044,7 @@
                 { id: 'info-50-2', cost: 50 },
                 { id: 'info-70', cost: 70 },
                 { id: 'info-100-1', cost: 100 },
-                { id: 'info-100-2', cost: 100 },
+                { id: 'info-150', cost: 150 },
                 { id: 'info-250', cost: 250 }
             ];
             shopItems.forEach(item => {
