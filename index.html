@@ -965,6 +965,9 @@
             triggerMeteor(btn);
             setTimeout(() => {
                 showFloatingText(finalAmount);
+                // stats.totalGain güncellendikten sonra bunu ekle:
+                localStorage.setItem('study_stats', JSON.stringify(stats));
+                updateUI();
                 updateUI();
             }, 500);
         }
@@ -984,9 +987,19 @@
 
             stopTimer();
 
-            // Verim Hesabı: 1 saatte 150 XP baz alınır
+            // resetDay fonksiyonu içindeki verim hesabı kısmı
+            const savedStats = JSON.parse(localStorage.getItem('study_stats')) || { totalGain: 0 };
+            const currentTotalGain = savedStats.totalGain; // Bellekteki değil, kayıtlı olanı al
+
+            // resetDay içinde studyHours satırını şu şekilde değiştir:
             const studyHours = finalSeconds / 3600;
-            let efficiency = studyHours > 0 ? Math.min(Math.round((stats.totalGain / (studyHours * 150)) * 100), 100) : 0;
+            let efficiency = 0;
+
+            if (studyHours > 0 && currentTotalGain > 0) {
+                // 1 saatte 150 XP kazanımı %100 kabul edilir
+                efficiency = Math.round((currentTotalGain / (studyHours * 150)) * 100);
+            }
+            efficiency = Math.min(efficiency, 100); // %100'ü geçmesin
 
             const reportHTML = `
         <div id="reportModal" class="modal">
@@ -1004,34 +1017,34 @@
         }
 
         function closeReport() {
-    // 1. Değişkenleri Sıfırla
-    xp = 0;
-    accumulatedTime = 0;
-    startTime = null;
-    stats = { totalGain: 0, totalSpend: 0 }; // Gereksiz test/video sayacı temizlendi
+            // 1. Değişkenleri Sıfırla
+            xp = 0;
+            accumulatedTime = 0;
+            startTime = null;
+            stats = { totalGain: 0, totalSpend: 0 }; // Gereksiz test/video sayacı temizlendi
 
-    // 2. LocalStorage Temizliği (Koleksiyon/Eşyalar hariç)
-    localStorage.removeItem('start_time');
-    localStorage.setItem('study_seconds', 0);
-    localStorage.setItem('study_xp', 0);
-    localStorage.setItem('study_stats', JSON.stringify(stats));
-    
-    // Günlük görevlerin her gün yenilenmesi için tarih bilgisini de siliyoruz
-    localStorage.removeItem('daily_done'); 
+            // 2. LocalStorage Temizliği (Koleksiyon/Eşyalar hariç)
+            localStorage.removeItem('start_time');
+            localStorage.setItem('study_seconds', 0);
+            localStorage.setItem('study_xp', 0);
+            localStorage.setItem('study_stats', JSON.stringify(stats));
 
-    // 3. Arayüzü Güncelle
-    const modal = document.getElementById('reportModal');
-    if (modal) modal.remove();
+            // Günlük görevlerin her gün yenilenmesi için tarih bilgisini de siliyoruz
+            localStorage.removeItem('daily_done');
 
-    updateUI();
-    updateTimerDisplay();
-    
-    // Eğer sayfada yeni görevi hazırlayan bir fonksiyonun varsa çağır:
-    if (typeof setupDailyMission === "function") setupDailyMission();
+            // 3. Arayüzü Güncelle
+            const modal = document.getElementById('reportModal');
+            if (modal) modal.remove();
 
-    // Sayfayı yenilemek en temiz sıfırlama yöntemidir:
-    location.reload();
-}
+            updateUI();
+            updateTimerDisplay();
+
+            // Eğer sayfada yeni görevi hazırlayan bir fonksiyonun varsa çağır:
+            if (typeof setupDailyMission === "function") setupDailyMission();
+
+            // Sayfayı yenilemek en temiz sıfırlama yöntemidir:
+            location.reload();
+        }
 
         function updateUI() {
             document.getElementById('xp-val').innerText = xp;
